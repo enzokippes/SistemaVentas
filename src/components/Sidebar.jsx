@@ -9,7 +9,7 @@ import {
   LogOut 
 } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, onLogout }) {
+export default function Sidebar({ activeTab, setActiveTab, onLogout, storeName = 'MiniMercado Kippes' }) {
   const menuItems = [
     { id: 'pos', label: 'Ventas', icon: ShoppingCart },
     { id: 'inventory', label: 'Productos', icon: Package },
@@ -28,7 +28,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }) {
             <ShoppingCart size={20} />
           </div>
           <div>
-            <div className="brand-text-title">MiniMercado Kippes</div>
+            <div className="brand-text-title">{storeName || 'MiniMercado Kippes'}</div>
             <div className="brand-text-subtitle">PUNTO DE VENTA</div>
           </div>
         </div>

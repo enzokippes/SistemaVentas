@@ -148,7 +148,7 @@ export default function CategoriesView({
 
         <button className="btn btn-primary" onClick={handleOpenAdd}>
           <Plus size={18} />
-          <span>+ Nueva Categoría</span>
+          <span>Nueva Categoría</span>
         </button>
       </div>
 

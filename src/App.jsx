@@ -58,6 +58,43 @@ export default function App() {
     loadAllData();
   }, []);
 
+  // Global Keyboard Shortcuts (F1, F2, F3, F4, F5) active ANYWHERE in the app
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (e.key === 'F1') {
+        e.preventDefault();
+        setActiveTab('pos');
+        setTimeout(() => {
+          const barcodeInput = document.querySelector('.barcode-input');
+          barcodeInput?.focus();
+        }, 50);
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        const barcodeInput = document.querySelector('.barcode-input');
+        const globalSearch = document.getElementById('global-search-input');
+        if (barcodeInput) {
+          barcodeInput.focus();
+          barcodeInput.select();
+        } else if (globalSearch) {
+          globalSearch.focus();
+          globalSearch.select();
+        }
+      } else if (e.key === 'F3') {
+        e.preventDefault();
+        setActiveTab('inventory');
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        setActiveTab('categories');
+      } else if (e.key === 'F5') {
+        e.preventDefault();
+        setActiveTab('clients');
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   // Handlers for POS & Sales
   const handleRecordSale = (saleData) => {
     const recorded = recordSale(saleData);
@@ -119,10 +156,17 @@ export default function App() {
     return mov;
   };
 
-  // Settings
+  // Settings & Live Store Name
   const handleSaveConfig = (newConfig) => {
     saveConfig(newConfig);
     setConfig(newConfig);
+  };
+
+  const handleUpdateLiveStoreName = (newName) => {
+    setConfig((prev) => ({
+      ...prev,
+      storeName: newName
+    }));
   };
 
   // Logout / Exit handler
@@ -136,11 +180,12 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {/* Left Sidebar (MiniMercado Kippes) */}
+      {/* Left Sidebar with live storeName */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onLogout={handleLogout}
+        storeName={config?.storeName || 'MiniMercado Kippes'}
       />
 
       {/* Main Panel */}
@@ -209,6 +254,7 @@ export default function App() {
                 config={config}
                 onSaveConfig={handleSaveConfig}
                 onReloadData={loadAllData}
+                onUpdateLiveStoreName={handleUpdateLiveStoreName}
               />
             </div>
           )}

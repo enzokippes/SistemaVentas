@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Settings, 
   Download, 
   Upload, 
   Save, 
@@ -12,9 +11,32 @@ import {
 } from 'lucide-react';
 import { exportDatabaseJSON, importDatabaseJSON, resetDatabase } from '../../data/storage';
 
-export default function SettingsView({ config, onSaveConfig, onReloadData }) {
-  const [formData, setFormData] = useState({ ...config });
+export default function SettingsView({ config, onSaveConfig, onReloadData, onUpdateLiveStoreName }) {
+  const [formData, setFormData] = useState({
+    storeName: config?.storeName ?? 'MiniMercado Kippes',
+    address: config?.address ?? 'Av. Principal 1234',
+    phone: config?.phone ?? '351-555-1234',
+    ticketFooter: config?.ticketFooter ?? '¡Gracias por su compra! Vuelva pronto.'
+  });
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    if (config) {
+      setFormData({
+        storeName: config.storeName ?? 'MiniMercado Kippes',
+        address: config.address ?? '',
+        phone: config.phone ?? '',
+        ticketFooter: config.ticketFooter ?? ''
+      });
+    }
+  }, [config]);
+
+  const handleNameChange = (e) => {
+    const newName = e.target.value;
+    setFormData((prev) => ({ ...prev, storeName: newName }));
+    // Live update in sidebar brand immediately
+    onUpdateLiveStoreName?.(newName);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -84,7 +106,7 @@ export default function SettingsView({ config, onSaveConfig, onReloadData }) {
           </div>
           <div>
             <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-              Datos del Negocio (MiniMercado Kippes)
+              Datos del Negocio ({formData.storeName || 'MiniMercado Kippes'})
             </h2>
             <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
               Información que se imprime en los comprobantes y tickets térmicos
@@ -99,8 +121,9 @@ export default function SettingsView({ config, onSaveConfig, onReloadData }) {
               <input
                 type="text"
                 className="form-input"
-                value={formData.storeName || 'MiniMercado Kippes'}
-                onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
+                value={formData.storeName}
+                onChange={handleNameChange}
+                placeholder="Escribe el nombre del negocio..."
                 required
               />
             </div>
@@ -110,7 +133,7 @@ export default function SettingsView({ config, onSaveConfig, onReloadData }) {
               <input
                 type="text"
                 className="form-input"
-                value={formData.phone || ''}
+                value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               />
             </div>
@@ -121,7 +144,7 @@ export default function SettingsView({ config, onSaveConfig, onReloadData }) {
             <input
               type="text"
               className="form-input"
-              value={formData.address || ''}
+              value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
             />
           </div>
@@ -131,7 +154,7 @@ export default function SettingsView({ config, onSaveConfig, onReloadData }) {
             <input
               type="text"
               className="form-input"
-              value={formData.ticketFooter || '¡Gracias por su compra! Vuelva pronto.'}
+              value={formData.ticketFooter}
               onChange={(e) => setFormData({ ...formData, ticketFooter: e.target.value })}
             />
           </div>

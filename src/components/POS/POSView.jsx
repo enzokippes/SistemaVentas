@@ -290,10 +290,6 @@ export default function POSView({
             <span>📦 F3 - Productos</span>
           </button>
 
-          <button className="btn-shortcut-tab" onClick={() => onNavigateTab?.('inventory')}>
-            <span>🏪 F4 - Inventario</span>
-          </button>
-
           <button className="btn-shortcut-tab" onClick={() => onNavigateTab?.('clients')}>
             <span>👤 F5 - Clientes</span>
           </button>

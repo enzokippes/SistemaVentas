@@ -218,7 +218,7 @@ export default function InventoryView({
 
           <button className="btn btn-primary" onClick={handleOpenAddModal}>
             <Plus size={18} />
-            <span>+ Nuevo Producto</span>
+            <span>Nuevo Producto</span>
           </button>
         </div>
       </div>
