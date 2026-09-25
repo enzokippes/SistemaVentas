@@ -6,16 +6,20 @@ import {
   Users, 
   BarChart3, 
   Settings, 
-  LogOut 
+  LogOut,
+  Wallet
 } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, onLogout, storeName = 'MiniMercado Kippes' }) {
+export default function Sidebar({ activeTab, setActiveTab, onLogout, storeName = 'MiniMercado Kippes', config }) {
+  const showCash = config?.showCashModule !== false;
+
   const menuItems = [
-    { id: 'pos', label: 'Ventas', icon: ShoppingCart },
-    { id: 'inventory', label: 'Productos', icon: Package },
+    { id: 'pos', label: 'Ventas', icon: ShoppingCart, key: 'F1' },
+    { id: 'inventory', label: 'Productos', icon: Package, key: 'F2' },
+    { id: 'clients', label: 'Clientes', icon: Users, key: 'F3' },
+    ...(showCash ? [{ id: 'cashregister', label: 'Caja', icon: Wallet, key: 'F4' }] : []),
+    { id: 'reports', label: 'Reportes', icon: BarChart3, key: 'F5' },
     { id: 'categories', label: 'Categorías', icon: Tags },
-    { id: 'clients', label: 'Clientes', icon: Users },
-    { id: 'reports', label: 'Reportes', icon: BarChart3 },
     { id: 'settings', label: 'Configuración', icon: Settings },
   ];
 
@@ -43,9 +47,25 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, storeName =
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={`sidebar-item ${isActive ? 'active' : ''}`}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
               >
-                <Icon size={18} />
-                <span>{item.label}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <Icon size={18} />
+                  <span>{item.label}</span>
+                </div>
+                {item.key && (
+                  <span style={{ 
+                    fontSize: '0.68rem', 
+                    color: isActive ? '#93C5FD' : '#64748B', 
+                    backgroundColor: isActive ? 'rgba(37, 99, 235, 0.2)' : 'rgba(255, 255, 255, 0.05)', 
+                    padding: '2px 5px', 
+                    borderRadius: '4px',
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: 600
+                  }}>
+                    {item.key}
+                  </span>
+                )}
               </button>
             );
           })}

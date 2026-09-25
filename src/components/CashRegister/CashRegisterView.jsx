@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
 import { 
-  Wallet, 
   ArrowUpCircle, 
   ArrowDownCircle, 
   Lock, 
   Unlock, 
   History, 
   DollarSign, 
-  CheckCircle2, 
-  AlertCircle,
-  Clock,
   Plus
 } from 'lucide-react';
+import ModalBackdrop from '../Common/ModalBackdrop';
 
 export default function CashRegisterView({ 
   cashSession, 
@@ -43,9 +40,15 @@ export default function CashRegisterView({
     }).format(val || 0);
   };
 
-  const sessionStartTime = cashSession?.isOpen ? new Date(cashSession.openedAt).getTime() : 0;
-  const currentSessionSales = sales.filter((s) => new Date(s.date).getTime() >= sessionStartTime);
-  const currentSessionMovements = cashMovements.filter((m) => new Date(m.date).getTime() >= sessionStartTime);
+  const sessionStartTime = (cashSession?.isOpen && cashSession?.openedAt)
+    ? new Date(cashSession.openedAt).getTime()
+    : null;
+  const currentSessionSales = sessionStartTime !== null
+    ? sales.filter((s) => new Date(s.date).getTime() >= sessionStartTime)
+    : [];
+  const currentSessionMovements = sessionStartTime !== null
+    ? cashMovements.filter((m) => new Date(m.date).getTime() >= sessionStartTime)
+    : [];
 
   const cashSalesTotal = currentSessionSales
     .filter((s) => s.paymentMethod === 'efectivo')
@@ -59,16 +62,34 @@ export default function CashRegisterView({
     .filter((s) => s.paymentMethod === 'fiado')
     .reduce((acc, s) => acc + s.total, 0);
 
-  const totalIncomes = currentSessionMovements
-    .filter((m) => m.type === 'ingreso')
-    .reduce((acc, m) => acc + m.amount, 0);
-
   const totalExpenses = currentSessionMovements
     .filter((m) => m.type === 'salida')
     .reduce((acc, m) => acc + m.amount, 0);
 
+  // Incomes: Cash incomes enter physical cash drawer, digital incomes do not
+  const cashIncomes = currentSessionMovements
+    .filter((m) => m.type === 'ingreso' && (m.paymentMethod === 'efectivo' || !m.paymentMethod))
+    .reduce((acc, m) => acc + m.amount, 0);
+
+  const digitalIncomes = currentSessionMovements
+    .filter((m) => m.type === 'ingreso' && m.paymentMethod !== 'efectivo')
+    .reduce((acc, m) => acc + m.amount, 0);
+
+  const _totalIncomes = cashIncomes + digitalIncomes;
+
+  // Specific debt collections breakdown
+  const debtCollectionsCash = currentSessionMovements
+    .filter((m) => m.type === 'ingreso' && m.category === 'debt_payment' && (m.paymentMethod === 'efectivo' || !m.paymentMethod))
+    .reduce((acc, m) => acc + m.amount, 0);
+
+  const debtCollectionsDigital = currentSessionMovements
+    .filter((m) => m.type === 'ingreso' && m.category === 'debt_payment' && m.paymentMethod !== 'efectivo')
+    .reduce((acc, m) => acc + m.amount, 0);
+
+  const debtCollectionsTotal = debtCollectionsCash + debtCollectionsDigital;
+
   const initialAmount = cashSession?.initialCash || 0;
-  const expectedCashInDrawer = initialAmount + cashSalesTotal + totalIncomes - totalExpenses;
+  const expectedCashInDrawer = initialAmount + cashSalesTotal + cashIncomes - totalExpenses;
 
   const handleOpenRegister = (e) => {
     e.preventDefault();
@@ -187,7 +208,7 @@ export default function CashRegisterView({
 
       {/* Real-time Cash Balance Grid */}
       {cashSession?.isOpen && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <div style={{ background: 'var(--bg-surface)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>
               Fondo Inicial (Apertura)
@@ -211,6 +232,18 @@ export default function CashRegisterView({
 
           <div style={{ background: 'var(--bg-surface)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>
+              Cobro Fiados (Efectivo)
+            </span>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.75rem', fontWeight: 700, color: '#38bdf8', marginTop: '0.25rem' }}>
+              +{formatCurrency(cashIncomes)}
+            </div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              ({currentSessionMovements.filter(m => m.type === 'ingreso').length} ingreso/cobro)
+            </span>
+          </div>
+
+          <div style={{ background: 'var(--bg-surface)', padding: '1.25rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>
               Gastos / Pagos de Caja
             </span>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.75rem', fontWeight: 700, color: '#f87171', marginTop: '0.25rem' }}>
@@ -223,19 +256,22 @@ export default function CashRegisterView({
 
           <div 
             style={{ 
-              background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.3), rgba(15, 23, 42, 0.9))', 
+              background: '#F8FAFC', 
               padding: '1.25rem', 
               borderRadius: 'var(--radius-lg)', 
-              border: '2px solid rgba(59, 130, 246, 0.4)',
-              boxShadow: 'var(--shadow-glow)'
+              border: '1px solid var(--border-color)',
+              boxShadow: 'var(--shadow-sm)'
             }}
           >
-            <span style={{ fontSize: '0.85rem', color: '#93c5fd', textTransform: 'uppercase', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
               Debe haber en el cajón (Efectivo)
             </span>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '2rem', fontWeight: 800, color: '#fff', marginTop: '0.25rem' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '2rem', fontWeight: 800, color: 'var(--color-primary-dark)', marginTop: '0.25rem' }}>
               {formatCurrency(expectedCashInDrawer)}
             </div>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              (Fondo + Ventas + Cobros - Gastos)
+            </span>
           </div>
         </div>
       )}
@@ -322,13 +358,27 @@ export default function CashRegisterView({
                     fontSize: '0.85rem'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                     {m.type === 'salida' ? (
                       <ArrowDownCircle size={16} color="#f87171" />
                     ) : (
                       <ArrowUpCircle size={16} color="#34d399" />
                     )}
-                    <span>{m.reason}</span>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        {m.category === 'debt_payment' && (
+                          <span style={{ fontSize: '0.68rem', backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '1px 6px', borderRadius: '3px', fontWeight: 700 }}>
+                            COBRO FIADO
+                          </span>
+                        )}
+                        <span style={{ fontWeight: 500 }}>{m.reason}</span>
+                      </div>
+                      {m.paymentMethod && (
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          {m.paymentMethod === 'efectivo' ? '💵 Efectivo (Cajón)' : '📲 Transferencia'}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <span 
                     style={{ 
@@ -358,27 +408,37 @@ export default function CashRegisterView({
               <h3 style={{ fontSize: '1.15rem', color: '#fff', margin: 0 }}>Ventas Totales del Turno Actual</h3>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)' }}>
                 <span style={{ fontSize: '0.9rem' }}>💵 Ventas en Efectivo:</span>
                 <strong style={{ fontFamily: 'var(--font-mono)', color: '#34d399' }}>{formatCurrency(cashSalesTotal)}</strong>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)' }}>
-                <span style={{ fontSize: '0.9rem' }}>📱 Mercado Pago / Transferencias QR:</span>
+                <span style={{ fontSize: '0.9rem' }}>📲 Transferencias / Mercado Pago:</span>
                 <strong style={{ fontFamily: 'var(--font-mono)', color: '#38bdf8' }}>{formatCurrency(digitalSalesTotal)}</strong>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)' }}>
-                <span style={{ fontSize: '0.9rem' }}>📋 Fiados / Cuentas Corrientes:</span>
+                <span style={{ fontSize: '0.9rem' }}>📋 Fiados Otorgados (Turno):</span>
                 <strong style={{ fontFamily: 'var(--font-mono)', color: '#fbbf24' }}>{formatCurrency(creditSalesTotal)}</strong>
               </div>
 
-              <div style={{ borderTop: '1px dashed var(--border)', margin: '0.5rem 0' }}></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)' }}>
+                <div>
+                  <span style={{ fontSize: '0.9rem', display: 'block' }}>🤝 Cobro de Fiados / Deudas:</span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                    (💵 {formatCurrency(debtCollectionsCash)} efvo · 📲 {formatCurrency(debtCollectionsDigital)} transf)
+                  </span>
+                </div>
+                <strong style={{ fontFamily: 'var(--font-mono)', color: '#38bdf8' }}>+{formatCurrency(debtCollectionsTotal)}</strong>
+              </div>
+
+              <div style={{ borderTop: '1px dashed var(--border)', margin: '0.25rem 0' }}></div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '0.75rem', background: 'rgba(255, 255, 255, 0.04)', borderRadius: 'var(--radius-md)' }}>
-                <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>Total Facturado en el Turno:</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: 800, color: '#34d399' }}>
+                <span style={{ fontSize: '1.05rem', fontWeight: 700 }}>Total Facturado en el Turno:</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.45rem', fontWeight: 800, color: '#34d399' }}>
                   {formatCurrency(cashSalesTotal + digitalSalesTotal + creditSalesTotal)}
                 </span>
               </div>
@@ -402,7 +462,7 @@ export default function CashRegisterView({
                 <th>Turno / Cajero</th>
                 <th style={{ textAlign: 'right' }}>Fondo Inicial</th>
                 <th style={{ textAlign: 'right' }}>Ventas Efectivo</th>
-                <th style={{ textAlign: 'right' }}>Ventas Digitales</th>
+                <th style={{ textAlign: 'right' }}>Transferencias</th>
                 <th style={{ textAlign: 'right' }}>Total Facturado</th>
                 <th style={{ textAlign: 'right' }}>Efectivo Esperado</th>
                 <th style={{ textAlign: 'right' }}>Efectivo Real Contado</th>
@@ -458,7 +518,7 @@ export default function CashRegisterView({
 
       {/* Modal for Register Closing / Arqueo */}
       {isClosingModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsClosingModalOpen(false)}>
+        <ModalBackdrop onClose={() => setIsClosingModalOpen(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
             <div className="modal-header">
               <h2 style={{ fontSize: '1.25rem', color: '#fff', margin: 0 }}>Cierre de Turno y Arqueo de Caja</h2>
@@ -473,7 +533,7 @@ export default function CashRegisterView({
                     </strong>
                   </div>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    (Fondo inicial ${initialAmount} + Ventas en efectivo ${cashSalesTotal} + Ingresos ${totalIncomes} - Salidas ${totalExpenses})
+                    (Fondo inicial {formatCurrency(initialAmount)} + Ventas efectivo {formatCurrency(cashSalesTotal)} + Cobros efectivo {formatCurrency(cashIncomes)} - Gastos {formatCurrency(totalExpenses)})
                   </span>
                 </div>
 
@@ -484,6 +544,7 @@ export default function CashRegisterView({
                     className="form-input"
                     value={countedCash}
                     onChange={(e) => setCountedCash(e.target.value)}
+                    onFocus={(e) => e.target.select()}
                     style={{ fontSize: '1.5rem', fontFamily: 'var(--font-mono)', fontWeight: 700 }}
                     required
                   />
@@ -532,7 +593,7 @@ export default function CashRegisterView({
               </div>
             </form>
           </div>
-        </div>
+        </ModalBackdrop>
       )}
     </div>
   );

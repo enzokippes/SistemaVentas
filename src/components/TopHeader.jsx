@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Calendar, Keyboard } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 
-export default function TopHeader({ onGlobalSearch, onFocusSearch }) {
+export default function TopHeader() {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
@@ -21,28 +21,12 @@ export default function TopHeader({ onGlobalSearch, onFocusSearch }) {
   });
 
   return (
-    <header className="top-header">
-      {/* Search Input Bar with F2 Badge */}
-      <div className="header-search-box">
-        <Search size={18} color="#94a3b8" />
-        <input
-          type="text"
-          id="global-search-input"
-          className="header-search-input"
-          placeholder="Buscar producto por nombre, código o escanear..."
-          onChange={(e) => onGlobalSearch?.(e.target.value)}
-        />
-        <div className="search-shortcut-badge" onClick={onFocusSearch} style={{ cursor: 'pointer' }}>
-          <Keyboard size={13} />
-          <span>F2 - Buscar</span>
-        </div>
-      </div>
-
-      {/* Right Section: Date/Time Only (No login / No user avatar) */}
+    <header className="top-header" style={{ justifyContent: 'flex-end' }}>
+      {/* Right Section: Date/Time Only */}
       <div className="header-right-widgets">
         <div className="header-date-widget">
-          <Calendar size={18} color="#2563eb" />
-          <span style={{ fontWeight: 600, color: '#1e293b' }}>
+          <Calendar size={18} color="var(--primary)" />
+          <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
             {formattedDate}, {formattedTime}
           </span>
         </div>
