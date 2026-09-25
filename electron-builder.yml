@@ -1,0 +1,35 @@
+appId: com.kippes.minimercado
+productName: "MiniMercado Kippes"
+copyright: "Copyright 2025 MiniMercado Kippes"
+
+directories:
+  output: dist-electron
+  buildResources: build
+
+files:
+  - dist/**/*
+  - electron/**/*
+  - node_modules/**/*
+  - package.json
+  - "!node_modules/.cache"
+  - "!**/*.map"
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  allowElevation: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: "MiniMercado Kippes"
+  deleteAppDataOnUninstall: false
+  language: 3082
