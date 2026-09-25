@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, Printer, CheckCircle, ArrowRight } from 'lucide-react';
+import { X, Printer, CheckCircle } from 'lucide-react';
+import ModalBackdrop from '../Common/ModalBackdrop';
 
 export default function TicketModal({ isOpen, onClose, sale, config }) {
   if (!isOpen || !sale) return null;
@@ -21,12 +22,12 @@ export default function TicketModal({ isOpen, onClose, sale, config }) {
   const formattedTime = dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <ModalBackdrop onClose={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <CheckCircle size={20} color="#10b981" />
-            <h2 style={{ fontSize: '1.2rem', color: '#fff', margin: 0 }}>¡Venta Completada!</h2>
+            <h2 style={{ fontSize: '1.2rem', color: 'var(--text-main)', margin: 0 }}>¡Venta Completada!</h2>
           </div>
           <button 
             onClick={onClose} 
@@ -40,7 +41,7 @@ export default function TicketModal({ isOpen, onClose, sale, config }) {
           {/* Real Thermal Ticket Preview */}
           <div id="printable-ticket" style={{ fontFamily: 'monospace', fontSize: '13px', lineHeight: 1.4 }}>
             <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 4px 0' }}>{config?.storeName || 'MI KIOSCO & DESPENSA'}</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 4px 0' }}>{config?.storeName || 'MINIMERCADO KIPPES'}</h3>
               <div style={{ fontSize: '11px', color: '#475569' }}>{config?.address || 'Dirección del Local'}</div>
               <div style={{ fontSize: '11px', color: '#475569' }}>Tel: {config?.phone || '-'}</div>
               <div style={{ borderBottom: '1px dashed #64748b', margin: '8px 0' }}></div>
@@ -49,7 +50,11 @@ export default function TicketModal({ isOpen, onClose, sale, config }) {
                 <span>Hora: {formattedTime}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-                <span>Ticket #{sale.id.slice(-6).toUpperCase()}</span>
+                <span style={{ fontWeight: 'bold' }}>
+                  {sale.dailyTicketNumber != null 
+                    ? `Ticket #${sale.dailyTicketNumber}` 
+                    : `Ticket #${sale.id.slice(-6).toUpperCase()}`}
+                </span>
                 <span>Cliente: {sale.clientName}</span>
               </div>
               <div style={{ borderBottom: '1px dashed #64748b', margin: '8px 0' }}></div>
@@ -126,6 +131,6 @@ export default function TicketModal({ isOpen, onClose, sale, config }) {
           </button>
         </div>
       </div>
-    </div>
+    </ModalBackdrop>
   );
 }
